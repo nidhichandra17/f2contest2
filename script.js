@@ -1,4 +1,4 @@
-let data = [];
+ let data = [];
 let isMarketCapAscending = true;
 let isPercentageChangeAscending = true;
 

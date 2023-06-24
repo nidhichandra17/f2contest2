@@ -1,70 +1,157 @@
 let data = [];
+let isMarketCapAscending = true;
+let isPercentageChangeAscending = true;
 
-fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false')
-.then(response => response.json())
-.then(dataResponse => {
-  data = dataResponse;
-  renderTable(data);
-})
-.catch(error => {
-  console.error('Error:', error);
-});
+// Function to fetch data using .then
+function fetchDataWithThen() {
+  const apiUrl =
+    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false';
 
-// Fetch data using async/await
-async function fetchData() {
-try {
-  const response = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false');
-  const data = await response.json();
-  renderTable(data);
-} catch (error) {
-  console.error('Error:', error);
+  fetch(apiUrl)
+    .then((response) => response.json())
+    .then((responseData) => {
+      data = responseData;
+      renderTable(data);
+      attachEventListeners();
+    })
+    .catch((error) => console.log(error));
 }
-}
-// fetchData(); // Uncomment this line if you want to use async/await
 
+// Function to fetch data using async/await
+async function fetchDataWithAsyncAwait() {
+  const apiUrl =
+    'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1&sparkline=false';
+
+  try {
+    const response = await fetch(apiUrl);
+    const responseData = await response.json();
+    data = responseData;
+    renderTable(data);
+    attachEventListeners();
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+// Function to render table with data
 function renderTable(data) {
-  const tableBody = document.getElementById('tableBody');
+  const tableBody = document.getElementById('table-body');
+
+  // Clear previous table data
   tableBody.innerHTML = '';
 
-  data.forEach(item => {
+  // Iterate over each object in the data array
+  data.forEach((coin) => {
+    const { image, id, symbol, current_price, total_volume, price_change_percentage_24h, market_cap } = coin;
+
+    // Create a new table row
     const row = document.createElement('tr');
-    const percentageChange = item.price_change_percentage_24h;
-    const percentageChangeClass = percentageChange >= 0 ? 'positive-change' : 'negative-change';
 
-    row.innerHTML = `
-      <td id ="data1"><img src="${item.image}" alt="${item.name}" width="20"></td>
-      <td>${item.name}</td>
-      <td>${item.symbol}</td>
-      <td>${item.id}</td>
-      <td>${"$"+item.current_price}</td>
-      <td class="${percentageChangeClass}">${item.price_change_percentage_24h}%</td>
-      <td>${"Mkt Cap : $"+item.total_volume}</td>
-    `;
+    // Create table cells and populate them with data
+    const imageCell = document.createElement('td');
+    const imageElement = document.createElement('img');
+    imageElement.src = image;
+    imageElement.alt = symbol;
+    imageElement.classList.add('coin-image');
+    imageCell.appendChild(imageElement);
 
-    row.classList.add('table-row-border');
+    const idCell = document.createElement('td');
+    idCell.textContent = id;
+
+    const symbolCell = document.createElement('td');
+    symbolCell.textContent = symbol;
+
+    const priceCell = document.createElement('td');
+    priceCell.textContent = `$${current_price.toFixed(2)}`;
+
+    const volumeCell = document.createElement('td');
+    volumeCell.textContent = `$${total_volume.toFixed(2)}`;
+
+    const percentageChangeCell = document.createElement('td');
+    const percentageChangeValue = price_change_percentage_24h.toFixed(2);
+    percentageChangeCell.textContent = `${percentageChangeValue}%`;
+
+    // Set color based on the value of percentage change
+    if (price_change_percentage_24h > 0) {
+      percentageChangeCell.style.color = 'darkgreen';
+    } else if (price_change_percentage_24h < 0) {
+      percentageChangeCell.style.color = 'red';
+    }
+
+    const marketCapCell = document.createElement('td');
+    marketCapCell.textContent = market_cap;
+
+    // Append table cells to the row
+    row.appendChild(imageCell);
+    row.appendChild(idCell);
+    row.appendChild(symbolCell);
+    row.appendChild(priceCell);
+    row.appendChild(volumeCell);
+    row.appendChild(percentageChangeCell);
+    row.appendChild(marketCapCell);
+
+    // Append the row to the table body
     tableBody.appendChild(row);
   });
 }
 
-document.getElementById('searchButton').addEventListener('click', () => {
-  const searchInput = document.getElementById('searchInput');
-  const searchTerm = searchInput.value.toLowerCase();
+// Function to handle search
+function handleSearch() {
+  const searchInput = document.getElementById('search-input');
+  const searchText = searchInput.value.toLowerCase();
 
-  const filteredData = data.filter(item => {
-    const itemName = item.name.toLowerCase();
-    const itemSymbol = item.symbol.toLowerCase();
-    return itemName.includes(searchTerm) || itemSymbol.includes(searchTerm);
+  // Filter the data based on the search text
+  const filteredData = data.filter((coin) => {
+    const name = coin.name.toLowerCase();
+    const symbol = coin.symbol.toLowerCase();
+    return name.includes(searchText) || symbol.includes(searchText);
   });
 
   renderTable(filteredData);
-});
+}
 
-document.getElementById('sortMarketCapButton').addEventListener('click', () => {
-  data.sort((a, b) => b.total_volume - a.total_volume);
-  renderTable(data);
+// Function to sort by market cap
+function sortByMarketCap() {
+  isMarketCapAscending = !isMarketCapAscending;
+  const sortedData = [...data].sort((a, b) => {
+    if (isMarketCapAscending) {
+      return a.market_cap - b.market_cap;
+    } else {
+      return b.market_cap - a.market_cap;
+    }
   });
+  renderTable(sortedData);
+}
 
-document.getElementById('sortPercentageChangeButton').addEventListener('click', () => {
-  data.sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h);
-  renderTable(data);
-});
+// Function to sort by percentage change
+function sortByPercentageChange() {
+  isPercentageChangeAscending = !isPercentageChangeAscending;
+  const sortedData = [...data].sort((a, b) => {
+    if (isPercentageChangeAscending) {
+      return a.price_change_percentage_24h - b.price_change_percentage_24h;
+    } else {
+      return b.price_change_percentage_24h - a.price_change_percentage_24h;
+    }
+  });
+  renderTable(sortedData);
+}
+
+// Function to attach event listeners
+function attachEventListeners() {
+  // Attach event listener to search button
+  const searchButton = document.getElementById('search-button');
+  searchButton.addEventListener('click', handleSearch);
+
+  // Attach event listeners to sorting buttons
+  const sortMarketCapButton = document.getElementById('sort-market-cap');
+  sortMarketCapButton.addEventListener('click', sortByMarketCap);
+
+  const sortPercentageChangeButton = document.getElementById('sort-percentage-change');
+  sortPercentageChangeButton.addEventListener('click', sortByPercentageChange);
+}
+
+// Fetch data using .then method
+fetchDataWithThen();
+
+// Fetch data using async/await
+fetchDataWithAsyncAwait();

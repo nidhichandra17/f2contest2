@@ -1,4 +1,4 @@
-/* Body styles */
+ /* Body styles */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -146,4 +146,3 @@ table td:first-child {
 .container > * {
   margin-right: 10px;
 }
-
